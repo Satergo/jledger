@@ -2,8 +2,8 @@ plugins {
 	id 'java'
 }
 
-group 'com.satergo.jledger'
-version '0.0.0-SNAPSHOT'
+group 'com.satergo'
+version '0.0.1'
 
 repositories {
 	mavenCentral()

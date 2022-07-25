@@ -19,6 +19,13 @@ public final class ErgoProtocol extends AppProtocol {
 
 	public static final int CLA = 0xE0;
 	public static final int RESULT_OK = 0x9000;
+
+	private static void putBip32Path(ByteBuffer buffer, long[] bip32Path) {
+		buffer.put((byte) bip32Path.length);
+		for (long derivationIndex : bip32Path) {
+			buffer.putInt((int) derivationIndex);
+		}
+	}
 	
 	public ErgoProtocol(LedgerDevice device) {
 		super(device);
@@ -50,10 +57,7 @@ public final class ErgoProtocol extends AppProtocol {
 	public ErgoResponse.ExtendedPublicKey getExtendedPublicKey(Integer optionalAuthToken, long... bip32Path) throws ErgoException {
 		if (bip32Path.length < 2 || bip32Path.length > 10) throw new IllegalArgumentException("2-10 inc.");
 		ByteBuffer buffer = ByteBuffer.allocate(1 + bip32Path.length * 4 + (optionalAuthToken != null ? 4 : 0));
-		buffer.put((byte) (bip32Path.length));
-		for (long derivationIndex : bip32Path) {
-			buffer.putInt((int) derivationIndex);
-		}
+		putBip32Path(buffer, bip32Path);
 		if (optionalAuthToken != null) buffer.putInt(optionalAuthToken);
 		device.writeAPDU(new APDUCommand(CLA, 0x10, optionalAuthToken != null ? 0x02 : 0x01, 0x00, buffer.array()));
 		APDUResponse apduResponse = checkError(device.readAPDU(65));
@@ -76,10 +80,8 @@ public final class ErgoProtocol extends AppProtocol {
 			int networkType, Integer optionalAuthToken, long... bip32Path) throws ErgoException {
 		if (bip32Path.length < 5 || bip32Path.length > 10) throw new IllegalArgumentException("5-10 inc.");
 		ByteBuffer buffer = ByteBuffer.allocate(2 + bip32Path.length * 4 + (optionalAuthToken != null ? 4 : 0))
-				.put((byte) networkType)
-				.put((byte) (bip32Path.length));
-		for (long derivationIndex : bip32Path)
-			buffer.putInt((int) derivationIndex);
+				.put((byte) networkType);
+		putBip32Path(buffer, bip32Path);
 		if (optionalAuthToken != null) buffer.putInt(optionalAuthToken);
 		device.writeAPDU(new APDUCommand(CLA, 0x11, action.code, optionalAuthToken != null ? 0x02 : 0x01, buffer.array()));
 		return checkError(device.readAPDU(action == DerivationAction.RETURN ? 38 : 0))
@@ -261,10 +263,7 @@ public final class ErgoProtocol extends AppProtocol {
 	public void addOutputBoxChangeTree(int sessionId, long... bip32Path) throws ErgoException {
 		if (bip32Path.length < 2 || bip32Path.length > 10) throw new IllegalArgumentException("2-10 inc.");
 		ByteBuffer buffer = ByteBuffer.allocate(bip32Path.length * 4);
-		buffer.put((byte) (bip32Path.length));
-		for (long derivationIndex : bip32Path) {
-			buffer.putInt((int) derivationIndex);
-		}
+		putBip32Path(buffer, bip32Path);
 		device.writeAPDU(new APDUCommand(CLA, 0x21, 0x09, sessionId, buffer.array()));
 		voidCheckSuccess();
 	}
@@ -298,10 +297,7 @@ public final class ErgoProtocol extends AppProtocol {
 	public byte[] p2pkSign(int sessionId, long... bip32Path) throws ErgoException {
 		if (bip32Path.length < 5 || bip32Path.length > 10) throw new IllegalArgumentException("5-10 inc.");
 		ByteBuffer buffer = ByteBuffer.allocate(1 + bip32Path.length * 4);
-		buffer.put((byte) (bip32Path.length));
-		for (long derivationIndex : bip32Path) {
-			buffer.putInt((int) derivationIndex);
-		}
+		putBip32Path(buffer, bip32Path);
 		device.writeAPDU(new APDUCommand(CLA, 0x21, 0x0D, sessionId, buffer.array()));
 		return checkError(device.readAPDU(56))
 				.getData();
