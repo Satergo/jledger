@@ -166,9 +166,11 @@ public final class ErgoProtocol extends AppProtocol {
 	 * @param bip32Path unsigned integers, 5-10 inclusive
 	 * @return signature (56 bytes)
 	 */
-	public int startP2PKSigning(Integer optionalAuthToken, long... bip32Path) throws ErgoException {
+	public int startP2PKSigning(ErgoNetworkType networkType, Integer optionalAuthToken, long... bip32Path) throws ErgoException {
+		Objects.requireNonNull(networkType, "networkType");
 		if (bip32Path.length < 5 || bip32Path.length > 10) throw new IllegalArgumentException("5-10 inc.");
-		ByteBuffer buffer = ByteBuffer.allocate(1 + bip32Path.length * 4 + (optionalAuthToken != null ? 4 : 0));
+		ByteBuffer buffer = ByteBuffer.allocate(1 + 1 + bip32Path.length * 4 + (optionalAuthToken != null ? 4 : 0));
+		buffer.put(networkType == ErgoNetworkType.MAINNET ? (byte) 0x00 : (byte) 0x10);
 		putBip32Path(buffer, bip32Path);
 		if (optionalAuthToken != null) buffer.putInt(optionalAuthToken);
 		device.writeAPDU(new APDUCommand(CLA, 0x21, 0x01, optionalAuthToken != null ? 0x02 : 0x01, buffer.array()));
@@ -267,9 +269,8 @@ public final class ErgoProtocol extends AppProtocol {
 		voidCheckSuccess();
 	}
 
-	public void addOutputBoxMinersFeeTree(int sessionId, ErgoNetworkType networkType) throws ErgoException {
-		Objects.requireNonNull(networkType);
-		device.writeAPDU(new APDUCommand(CLA, 0x21, 0x17, sessionId, new byte[] { (byte) (networkType == ErgoNetworkType.MAINNET ? 0x01 : 0x02) }));
+	public void addOutputBoxMinersFeeTree(int sessionId) throws ErgoException {
+		device.writeAPDU(new APDUCommand(CLA, 0x21, 0x17, sessionId));
 		voidCheckSuccess();
 	}
 
