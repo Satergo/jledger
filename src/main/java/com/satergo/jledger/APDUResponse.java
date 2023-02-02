@@ -3,7 +3,7 @@ package com.satergo.jledger;
 import java.util.Arrays;
 
 /**
- * A more efficient version of javax.smartcardio.ResponseAPDU that allows reading bytes from the data part without copying the array
+ * A custom alternative to {@link javax.smartcardio.ResponseAPDU}
  */
 public final class APDUResponse {
 	private final byte[] apdu;

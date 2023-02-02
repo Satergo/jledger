@@ -3,12 +3,13 @@ package com.satergo.jledger;
 import java.util.Arrays;
 
 /**
- * A more efficient alternative to javax.smartcardio.CommandAPDU but with less features
- *
+ * A custom alternative to {@link javax.smartcardio.CommandAPDU}
+ * <p>
  * It does not support:
- * - {@code le} parameter
+ * - {@code Ne} parameter
+ * <p>
  * but it supports:
- * - Providing nc 0
+ * - Providing Nc 0
  * - Reading bytes from the data part without copying the array
  */
 public final class APDUCommand {
