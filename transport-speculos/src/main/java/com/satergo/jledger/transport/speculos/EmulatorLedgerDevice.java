@@ -1,4 +1,7 @@
-package com.satergo.jledger;
+package com.satergo.jledger.transport.speculos;
+
+import com.satergo.jledger.APDUResponse;
+import com.satergo.jledger.LedgerDevice;
 
 import java.io.IOException;
 import java.net.Socket;
@@ -31,6 +34,15 @@ public class EmulatorLedgerDevice implements LedgerDevice {
 			return true;
 		} catch (Exception e) {
 			return false;
+		}
+	}
+
+	@Override
+	public void close() {
+		try {
+			socket.close();
+		} catch (IOException e) {
+			throw new RuntimeException(e);
 		}
 	}
 

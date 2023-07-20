@@ -1,14 +1,12 @@
 plugins {
-	id 'java'
+	id 'java-library'
 }
 
-group 'com.satergo'
-version '0.0.1'
+allprojects {
+	group 'com.satergo.jledger'
+	version '0.0.1'
 
-repositories {
-	mavenCentral()
-}
-
-dependencies {
-	implementation 'org.hid4java:hid4java:0.7.0'
+	repositories {
+		mavenCentral()
+	}
 }

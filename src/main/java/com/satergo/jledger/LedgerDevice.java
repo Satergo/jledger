@@ -1,6 +1,7 @@
 package com.satergo.jledger;
 
 import java.util.Arrays;
+import java.util.List;
 
 public interface LedgerDevice {
 
@@ -11,6 +12,8 @@ public interface LedgerDevice {
 	int NANO_X_PRODUCT_ID = 0x4011;
 	int NANO_S_PLUS_PRODUCT_ID = 0x5011;
 
+	List<Integer> PRODUCT_IDS = List.of(BLUE_PRODUCT_ID, NANO_S_PRODUCT_ID, NANO_X_PRODUCT_ID, NANO_S_PLUS_PRODUCT_ID);
+
 	static boolean isLedgerDevice(int vendorId, int productId) {
 		return vendorId == VENDOR_ID && (productId == BLUE_PRODUCT_ID || productId == NANO_S_PRODUCT_ID || productId == NANO_X_PRODUCT_ID || productId == NANO_S_PLUS_PRODUCT_ID);
 	}
@@ -18,6 +21,8 @@ public interface LedgerDevice {
 	int getProductId();
 
 	boolean open();
+
+	void close();
 
 	int write(byte[] bytes);
 

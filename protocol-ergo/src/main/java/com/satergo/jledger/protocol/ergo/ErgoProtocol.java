@@ -54,7 +54,7 @@ public final class ErgoProtocol extends AppProtocol {
 	/**
 	 * @param bip32Path unsigned integers, 2-10 inclusive
 	 */
-	public ErgoResponse.ExtendedPublicKey getExtendedPublicKey(Integer optionalAuthToken, long... bip32Path) throws ErgoException {
+	public ErgoResponse.ExtendedPublicKey getExtendedPublicKey(long[] bip32Path, Integer optionalAuthToken) throws ErgoLedgerException {
 		if (bip32Path.length < 2 || bip32Path.length > 10) throw new IllegalArgumentException("2-10 inc.");
 		ByteBuffer buffer = ByteBuffer.allocate(1 + bip32Path.length * 4 + (optionalAuthToken != null ? 4 : 0));
 		putBip32Path(buffer, bip32Path);
@@ -77,7 +77,7 @@ public final class ErgoProtocol extends AppProtocol {
 	 */
 	public byte[] deriveAddress(
 			DerivationAction action,
-			int networkType, Integer optionalAuthToken, long... bip32Path) throws ErgoException {
+			int networkType, long[] bip32Path, Integer optionalAuthToken) throws ErgoLedgerException {
 		if (bip32Path.length < 5 || bip32Path.length > 10) throw new IllegalArgumentException("5-10 inc.");
 		ByteBuffer buffer = ByteBuffer.allocate(2 + bip32Path.length * 4 + (optionalAuthToken != null ? 4 : 0))
 				.put((byte) networkType);
@@ -95,7 +95,7 @@ public final class ErgoProtocol extends AppProtocol {
 	 * @param tokensCount unsigned byte
 	 * @return Random session ID
 	 */
-	public int attestBoxStart(byte[] transactionId, int boxIndex, long boxValue, int ergoTreeSize, int creationHeight, int tokensCount, int additionalRegistersSizeBytes, Integer optionalAuthToken) throws ErgoException {
+	public int attestBoxStart(byte[] transactionId, int boxIndex, long boxValue, int ergoTreeSize, int creationHeight, int tokensCount, int additionalRegistersSizeBytes, Integer optionalAuthToken) throws ErgoLedgerException {
 		requireLength(transactionId, 32);
 		ByteBuffer buffer = ByteBuffer.allocate(optionalAuthToken == null ? 55 : 59);
 		buffer.put(transactionId)
@@ -111,13 +111,13 @@ public final class ErgoProtocol extends AppProtocol {
 				.getDataByte(0) & 0xFF;
 	}
 
-	public Optional<Integer> attestAddErgoTreeChunk(int sessionId, byte[] ergoTreeChunk) throws ErgoException {
+	public Optional<Integer> attestAddErgoTreeChunk(int sessionId, byte[] ergoTreeChunk) throws ErgoLedgerException {
 		if (ergoTreeChunk.length > 255) throw new IllegalArgumentException("max length 255");
 		device.writeAPDU(new APDUCommand(CLA, 0x20, 0x02, sessionId, ergoTreeChunk));
 		return emptyOrOneUnsignedByte();
 	}
 
-	public Optional<Integer> attestAddTokens(int sessionId, LinkedHashMap<byte[], Long> tokens) throws ErgoException {
+	public Optional<Integer> attestAddTokens(int sessionId, LinkedHashMap<byte[], Long> tokens) throws ErgoLedgerException {
 		if (tokens.size() > 6) throw new IllegalArgumentException("max tokens size 6");
 		ByteBuffer buffer = ByteBuffer.allocate(tokens.size() * 32);
 		for (Map.Entry<byte[], Long> token : tokens.entrySet()) {
@@ -129,7 +129,7 @@ public final class ErgoProtocol extends AppProtocol {
 		return emptyOrOneUnsignedByte();
 	}
 
-	public Optional<Integer> attestAddRegistersChunk(int sessionId, byte[] registersChunk) throws ErgoException {
+	public Optional<Integer> attestAddRegistersChunk(int sessionId, byte[] registersChunk) throws ErgoLedgerException {
 		if (registersChunk.length > 255) throw new IllegalArgumentException("max length 255");
 		device.writeAPDU(new APDUCommand(CLA, 0x20, 0x04, sessionId, registersChunk));
 		return emptyOrOneUnsignedByte();
@@ -138,12 +138,12 @@ public final class ErgoProtocol extends AppProtocol {
 	/**
 	 * @param frameId unsigned byte
 	 */
-	public ErgoResponse.AttestedBoxFrame getAttestedBoxFrame(int sessionId, int frameId) throws ErgoException {
+	public ErgoResponse.AttestedBoxFrame getAttestedBoxFrame(int sessionId, int frameId) throws ErgoLedgerException {
 		device.writeAPDU(new APDUCommand(CLA, 0x20, 0x05, sessionId, new byte[] { (byte) frameId }));
 		byte[] bytes = new byte[257];
 		int read = device.read(bytes);
 		int sw = ((bytes[read - 2] & 0xFF) << 8) | (bytes[read - 1] & 0xFF);
-		if (sw != RESULT_OK) throw new ErgoException(sw);
+		if (sw != RESULT_OK) throw new ErgoLedgerException(sw);
 		ByteBuffer buffer = ByteBuffer.wrap(bytes, 0, read - 2);
 		byte[] boxId = new byte[32];
 		buffer.get(boxId);
@@ -168,7 +168,7 @@ public final class ErgoProtocol extends AppProtocol {
 	 * @param bip32Path unsigned integers, 5-10 inclusive
 	 * @return signature (56 bytes)
 	 */
-	public int startP2PKSigning(ErgoNetworkType networkType, Integer optionalAuthToken, long... bip32Path) throws ErgoException {
+	public int startP2PKSigning(ErgoNetworkType networkType, long[] bip32Path, Integer optionalAuthToken) throws ErgoLedgerException {
 		Objects.requireNonNull(networkType, "networkType");
 		if (bip32Path.length < 5 || bip32Path.length > 10) throw new IllegalArgumentException("5-10 inc.");
 		ByteBuffer buffer = ByteBuffer.allocate(1 + 1 + bip32Path.length * 4 + (optionalAuthToken != null ? 4 : 0));
@@ -187,7 +187,7 @@ public final class ErgoProtocol extends AppProtocol {
 	 * @param txDistinctTokenIdAmount unsigned byte
 	 * @param txOutputAmount unsigned short
 	 */
-	public void startTransaction(int sessionId, int txInputAmount, int txDataInputAmount, int txDistinctTokenIdAmount, int txOutputAmount) throws ErgoException {
+	public void startTransaction(int sessionId, int txInputAmount, int txDataInputAmount, int txDistinctTokenIdAmount, int txOutputAmount) throws ErgoLedgerException {
 		ByteBuffer buffer = ByteBuffer.allocate(2 + 2 + 1 + 2)
 				.putShort((short) txInputAmount)
 				.putShort((short) txDataInputAmount)
@@ -197,7 +197,7 @@ public final class ErgoProtocol extends AppProtocol {
 		voidCheckSuccess();
 	}
 
-	public void addTokenIds(int sessionId, byte[][] tokenIds) throws ErgoException {
+	public void addTokenIds(int sessionId, byte[][] tokenIds) throws ErgoLedgerException {
 		if (tokenIds.length > 7) throw new IllegalArgumentException("max token ids 7");
 		ByteBuffer buffer = ByteBuffer.allocate(tokenIds.length * 32);
 		for (byte[] tokenId : tokenIds) {
@@ -213,7 +213,7 @@ public final class ErgoProtocol extends AppProtocol {
 	 * @param frameIndex unsigned byte
 	 * @param tokens tokenId&lt;-&gt;tokenAmount
 	 */
-	public void addInputBoxFrame(int sessionId, byte[] boxId, int framesCount, int frameIndex, long amount, LinkedHashMap<byte[], Long> tokens, byte[] attestation, int contentExtensionLength) throws ErgoException {
+	public void addInputBoxFrame(int sessionId, byte[] boxId, int framesCount, int frameIndex, long amount, LinkedHashMap<byte[], Long> tokens, byte[] attestation, int contentExtensionLength) throws ErgoLedgerException {
 		requireLength(boxId, 32);
 		ByteBuffer buffer = ByteBuffer.allocate(32 + 1 + 1 + 8 + 1 + tokens.size() * (32 + 8) + 16 + 4)
 				.put(boxId)
@@ -229,19 +229,19 @@ public final class ErgoProtocol extends AppProtocol {
 		}
 		requireLength(attestation, 16);
 		buffer.put(attestation);
-		// The protocol says that this can only be sent with Frame 0, but should it be 0 or not present at all in other frames?
-		buffer.putInt(contentExtensionLength);
+		if (frameIndex == 0)
+			buffer.putInt(contentExtensionLength);
 		device.writeAPDU(new APDUCommand(CLA, 0x21, 0x12, sessionId, buffer.array()));
 		voidCheckSuccess();
 	}
 
-	public void addInputBoxContextExtensionChunk(int sessionId, byte[] chunk) throws ErgoException {
+	public void addInputBoxContextExtensionChunk(int sessionId, byte[] chunk) throws ErgoLedgerException {
 		if (chunk.length > 255) throw new IllegalArgumentException("max length 255");
 		device.writeAPDU(new APDUCommand(CLA, 0x21, 0x13, sessionId, chunk));
 		voidCheckSuccess();
 	}
 
-	public void addDataInputs(int sessionId, byte[][] boxIds) throws ErgoException {
+	public void addDataInputs(int sessionId, byte[][] boxIds) throws ErgoLedgerException {
 		if (boxIds.length > 7) throw new IllegalArgumentException("max length 7");
 		ByteBuffer buffer = ByteBuffer.allocate(boxIds.length * 32);
 		for (byte[] boxId : boxIds) {
@@ -255,7 +255,7 @@ public final class ErgoProtocol extends AppProtocol {
 	/**
 	 * @param tokensCount unsigned byte
 	 */
-	public void addOutputBoxStart(int sessionId, long boxValue, int ergoTreeSizeBytes, int creationHeight, int tokensCount, int additionalRegistersSizeBytes) throws ErgoException {
+	public void addOutputBoxStart(int sessionId, long boxValue, int ergoTreeSizeBytes, int creationHeight, int tokensCount, int additionalRegistersSizeBytes) throws ErgoLedgerException {
 		device.writeAPDU(new APDUCommand(CLA, 0x21, 0x15, sessionId, ByteBuffer.allocate(21)
 				.putLong(boxValue)
 				.putInt(ergoTreeSizeBytes)
@@ -265,13 +265,13 @@ public final class ErgoProtocol extends AppProtocol {
 		voidCheckSuccess();
 	}
 
-	public void addOutputBoxErgoTreeChunk(int sessionId, byte[] bytes) throws ErgoException {
+	public void addOutputBoxErgoTreeChunk(int sessionId, byte[] bytes) throws ErgoLedgerException {
 		if (bytes.length > 255) throw new IllegalArgumentException("max length 255");
 		device.writeAPDU(new APDUCommand(CLA, 0x21, 0x16, sessionId, bytes));
 		voidCheckSuccess();
 	}
 
-	public void addOutputBoxMinersFeeTree(int sessionId) throws ErgoException {
+	public void addOutputBoxMinersFeeTree(int sessionId) throws ErgoLedgerException {
 		device.writeAPDU(new APDUCommand(CLA, 0x21, 0x17, sessionId, true));
 		voidCheckSuccess();
 	}
@@ -279,7 +279,7 @@ public final class ErgoProtocol extends AppProtocol {
 	/**
 	 * @param bip32Path unsigned integers, 2-10 inclusive
 	 */
-	public void addOutputBoxChangeTree(int sessionId, long... bip32Path) throws ErgoException {
+	public void addOutputBoxChangeTree(int sessionId, long[] bip32Path) throws ErgoLedgerException {
 		if (bip32Path.length < 2 || bip32Path.length > 10) throw new IllegalArgumentException("2-10 inc.");
 		ByteBuffer buffer = ByteBuffer.allocate(1 + bip32Path.length * 4);
 		putBip32Path(buffer, bip32Path);
@@ -287,7 +287,7 @@ public final class ErgoProtocol extends AppProtocol {
 		voidCheckSuccess();
 	}
 
-	public void addOutputBoxTokens(int sessionId, LinkedHashMap<Integer, Long> tokens) throws ErgoException {
+	public void addOutputBoxTokens(int sessionId, LinkedHashMap<Integer, Long> tokens) throws ErgoLedgerException {
 		// TODO size limit
 		ByteBuffer buffer = ByteBuffer.allocate(tokens.size() * 12);
 		tokens.forEach((index, value) -> {
@@ -298,7 +298,7 @@ public final class ErgoProtocol extends AppProtocol {
 		voidCheckSuccess();
 	}
 
-	public void addOutputBoxRegistersChunk(int sessionId, byte[] registersChunk) throws ErgoException {
+	public void addOutputBoxRegistersChunk(int sessionId, byte[] registersChunk) throws ErgoLedgerException {
 		if (registersChunk.length > 255) throw new IllegalArgumentException("max length 255");
 		device.writeAPDU(new APDUCommand(CLA, 0x21, 0x1A, sessionId, registersChunk));
 		voidCheckSuccess();
@@ -307,22 +307,22 @@ public final class ErgoProtocol extends AppProtocol {
 	/**
 	 * @return signature (56 bytes)
 	 */
-	public byte[] confirmAndSign(int sessionId) throws ErgoException {
+	public byte[] confirmAndSign(int sessionId) throws ErgoLedgerException {
 		device.writeAPDU(new APDUCommand(CLA, 0x21, 0x20, sessionId, true));
 		return checkError(device.readAPDU(56))
 				.getData();
 	}
 
 
-	private void voidCheckSuccess() throws ErgoException {
-		super.voidCheckError(RESULT_OK, ErgoException::new);
+	private void voidCheckSuccess() throws ErgoLedgerException {
+		super.voidCheckError(RESULT_OK, ErgoLedgerException::new);
 	}
 
-	private APDUResponse checkError(APDUResponse response) throws ErgoException {
-		return super.checkError(RESULT_OK, response, ErgoException::new);
+	private APDUResponse checkError(APDUResponse response) throws ErgoLedgerException {
+		return super.checkError(RESULT_OK, response, ErgoLedgerException::new);
 	}
 
-	private Optional<Integer> emptyOrOneUnsignedByte() throws ErgoException {
+	private Optional<Integer> emptyOrOneUnsignedByte() throws ErgoLedgerException {
 		APDUResponse response = device.readAPDU(1);
 		if (response.getNr() == 0) {
 			checkError(response);

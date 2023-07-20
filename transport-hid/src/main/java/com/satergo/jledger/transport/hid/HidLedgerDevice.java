@@ -1,5 +1,6 @@
-package com.satergo.jledger;
+package com.satergo.jledger.transport.hid;
 
+import com.satergo.jledger.LedgerDevice;
 import org.hid4java.HidDevice;
 
 public class HidLedgerDevice implements LedgerDevice {
@@ -18,6 +19,11 @@ public class HidLedgerDevice implements LedgerDevice {
 	@Override
 	public boolean open() {
 		return hidDevice.open();
+	}
+
+	@Override
+	public void close() {
+		hidDevice.close();
 	}
 
 	@Override
