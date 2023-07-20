@@ -1,14 +1,57 @@
-plugins {
-	id 'java'
-}
+subprojects {
+	apply plugin: 'java-library'
+	apply plugin: 'maven-publish'
+	apply plugin: 'signing'
 
-group 'com.satergo'
-version '0.0.1'
+	group 'com.satergo.jledger'
+	version '0.0.1'
 
-repositories {
-	mavenCentral()
-}
+	java {
+		withJavadocJar()
+		withSourcesJar()
+	}
 
-dependencies {
-	implementation 'org.hid4java:hid4java:0.7.0'
+	compileJava {
+		options.release = 17
+	}
+
+	repositories {
+		mavenCentral()
+	}
+
+	dependencies {
+		api 'org.jspecify:jspecify:1.0.0'
+
+		testImplementation 'org.junit.jupiter:junit-jupiter-api:5.11.3'
+		testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.11.3'
+	}
+
+	test {
+		useJUnitPlatform()
+	}
+
+	tasks.withType(AbstractArchiveTask).configureEach {
+		preserveFileTimestamps = false
+		reproducibleFileOrder = true
+	}
+
+	publishing {
+		publications {
+			mavenJava(MavenPublication) {
+				from components.java
+			}
+		}
+	}
+
+	signing {
+		sign publishing.publications.mavenJava
+	}
+
+	javadoc {
+		options.addBooleanOption('html5', true)
+	}
+
+	tasks.withType(Javadoc).configureEach {
+		options.addBooleanOption('Xdoclint:-missing', true)
+	}
 }

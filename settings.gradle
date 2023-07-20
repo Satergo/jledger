@@ -1,2 +1,5 @@
-rootProject.name = 'jledger'
+include 'core'
+include 'transport-hid4java'
+include 'transport-speculos'
 
+include 'protocol-ergo'

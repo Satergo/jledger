@@ -1,0 +1,4 @@
+dependencies {
+    api project(':core')
+    api 'org.hid4java:hid4java:0.8.0'
+}
