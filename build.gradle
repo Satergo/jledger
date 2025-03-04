@@ -4,7 +4,7 @@ subprojects {
 	apply plugin: 'signing'
 
 	group 'com.satergo.jledger'
-	version '0.0.1'
+	version '0.0.1-SNAPSHOT'
 
 	java {
 		withJavadocJar()

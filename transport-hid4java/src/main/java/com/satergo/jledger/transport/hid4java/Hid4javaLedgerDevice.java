@@ -11,7 +11,7 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  * @see <a href="https://github.com/LedgerHQ/ledger-live/blob/develop/libs/ledgerjs/packages/react-native-hid/android/src/main/java/com/ledgerwallet/hid/LedgerHelper.java">com.ledgerwallet.hid.LedgerHelper</a>
  */
-public class HidLedgerDevice implements LedgerDevice {
+public class Hid4javaLedgerDevice implements LedgerDevice {
 
 	private static final int PACKET_SIZE = 64;
 	private static final byte TAG = 0x05;
@@ -19,7 +19,7 @@ public class HidLedgerDevice implements LedgerDevice {
 	private final HidDevice hidDevice;
 	private final int channel;
 
-	public HidLedgerDevice(HidDevice hidDevice) {
+	public Hid4javaLedgerDevice(HidDevice hidDevice) {
 		this.hidDevice = hidDevice;
 		this.channel = (int) Math.floor(Math.random() * 0xffff);
 	}

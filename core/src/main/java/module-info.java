@@ -3,6 +3,6 @@ import org.jspecify.annotations.NullMarked;
 @NullMarked
 module com.satergo.jledger.core {
 
-	requires org.jspecify;
+	requires static org.jspecify;
 	exports com.satergo.jledger;
 }
